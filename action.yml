@@ -119,7 +119,7 @@ runs:
     run: |
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} ${{ inputs.pkgs }} | tee vcpkg_dry_run.txt
     env:
-      VCPKG_ROOT: "${{ github.workspace }}/vcpkg"
+      VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
   - name: vcpkg-dry-run-win-manifest
     if: runner.os == 'Windows' && inputs.manifest-dir != '' && inputs.github-binarycache != 'true' && inputs.github-binarycache != true
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
@@ -127,13 +127,13 @@ runs:
     run: |
       & "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}\${{ inputs.vcpkg-subdir }}\installed | Tee-Object -FilePath vcpkg_dry_run.txt
     env:
-      VCPKG_ROOT: "${{ github.workspace }}/vcpkg"
+      VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
   - name: vcpkg-dry-run-unix-manifest
     if: runner.os != 'Windows' && inputs.manifest-dir != '' && inputs.github-binarycache != 'true' && inputs.github-binarycache != true
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
     shell: bash
     run: |
-      "${{ github.workspace }}/vcpkg/vcpkg" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed | tee vcpkg_dry_run.txt
+      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed | tee vcpkg_dry_run.txt
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
   - name: cache-vcpkg-archives
@@ -142,7 +142,7 @@ runs:
     uses: pat-s/always-upload-cache@v3
     with:
       path: ${{ github.workspace }}/vcpkg_cache
-      key: ${{ runner.os }}-${{ inputs.triplet }}-vcpkg-${{ hashFiles('vcpkg/vcpkg_dry_run.txt') }}-${{ inputs.cache-key }}
+      key: ${{ runner.os }}-${{ inputs.triplet }}-vcpkg-${{ hashFiles('${{ inputs.vcpkg-subdir }}/vcpkg_dry_run.txt') }}-${{ inputs.cache-key }}
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
   - name: Export GitHub Actions cache environment variables
@@ -190,4 +190,4 @@ runs:
     id: vcpkg-cmake-config
     run: |
       echo "vcpkg-cmake-config=-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ inputs.triplet }} -DVCPKG_MANIFEST_MODE=OFF" >> $GITHUB_OUTPUT
-      echo "vcpkg-cache-hash=${{ hashFiles('vcpkg/vcpkg_dry_run.txt') }}-${{ inputs.cache-key }}" >> $GITHUB_OUTPUT
+      echo "vcpkg-cache-hash=${{ hashFiles('${{ inputs.vcpkg-subdir }}/vcpkg_dry_run.txt') }}-${{ inputs.cache-key }}" >> $GITHUB_OUTPUT
