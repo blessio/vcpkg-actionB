@@ -8,8 +8,9 @@ inputs:
     description: "vcpkg triplet to use"
     required: true
   extra-args:
-    description: "Extra vcpkg command line args (optional)"
+    description: "Extra vcpkg install command line args (optional)"
     required: false
+    default: ''
   cache-key:
     description: "Additional cache key component (optional)"
     required: false
@@ -132,7 +133,7 @@ runs:
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
     shell: bash
     run: |
-      "${{ github.workspace }}/vcpkg/vcpkg" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/vcpkg/installed | tee vcpkg_dry_run.txt
+      "${{ github.workspace }}/vcpkg/vcpkg" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed | tee vcpkg_dry_run.txt
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
   - name: cache-vcpkg-archives
@@ -173,7 +174,7 @@ runs:
     shell: cmd
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
     run: |
-      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/vcpkg/installed
+      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
   - name: build-vcpkg-unix
