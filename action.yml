@@ -64,6 +64,7 @@ runs:
       repo: microsoft/vcpkg
       prerelease: false
       draft: false    
+
   - name: Determine checkout tag
     shell: bash
     id: determine-checkout-revision
@@ -75,6 +76,7 @@ runs:
       fi
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
   - name: checkout-vcpkg
     uses: actions/checkout@v4
     with:
@@ -84,6 +86,7 @@ runs:
       fetch-depth: ${{ inputs.fetch-depth }}
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
   - name: bootstrap-vcpkg-win
     if: runner.os == 'Windows'
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
@@ -91,6 +94,7 @@ runs:
     shell: cmd
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
   - name: bootstrap-vcpkg-unix
     if: runner.os != 'Windows'
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
@@ -98,44 +102,63 @@ runs:
     shell: bash
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
   - name: set-binarycache-variable
     if: inputs.github-binarycache != 'true' && inputs.github-binarycache != true
     shell: bash
     run: |
       echo VCPKG_DEFAULT_BINARY_CACHE='${{ github.workspace }}/vcpkg_cache' >> $GITHUB_ENV
       mkdir -p '${{ github.workspace }}/vcpkg_cache'
+
+  #
+  #  DRY RUNs : Use Dry run output as key for cache hit or miss later
+  #
+   
   - name: vcpkg-dry-run-win
     if: runner.os == 'Windows' && inputs.manifest-dir == '' && inputs.github-binarycache != 'true' && inputs.github-binarycache != true
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
     shell: powershell
-    run: |
-      & "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} ${{ inputs.pkgs }} | Tee-Object -FilePath vcpkg_dry_run.txt
+    run: >
+      & "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} ${{ inputs.pkgs }} 
+      | Tee-Object -FilePath vcpkg_dry_run.txt
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
   - name: vcpkg-dry-run-unix
     if: runner.os != 'Windows' && inputs.manifest-dir == '' && inputs.github-binarycache != 'true' && inputs.github-binarycache != true
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
     shell: bash
-    run: |
-      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} ${{ inputs.pkgs }} | tee vcpkg_dry_run.txt
+    run: > 
+      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} ${{ inputs.pkgs }} 
+      | tee vcpkg_dry_run.txt
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
   - name: vcpkg-dry-run-win-manifest
     if: runner.os == 'Windows' && inputs.manifest-dir != '' && inputs.github-binarycache != 'true' && inputs.github-binarycache != true
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
     shell: powershell
-    run: |
-      & "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}\${{ inputs.vcpkg-subdir }}\installed | Tee-Object -FilePath vcpkg_dry_run.txt
+    run: >
+      & "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
+      --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}\${{ inputs.vcpkg-subdir }}\installed 
+      | Tee-Object -FilePath vcpkg_dry_run.txt
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
   - name: vcpkg-dry-run-unix-manifest
     if: runner.os != 'Windows' && inputs.manifest-dir != '' && inputs.github-binarycache != 'true' && inputs.github-binarycache != true
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
     shell: bash
     run: |
-      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed | tee vcpkg_dry_run.txt
+      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --dry-run --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }}  \
+      --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed | tee vcpkg_dry_run.txt 
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
+  ##########################
+  #  CACHE 
+  #
+
   - name: cache-vcpkg-archives
     if: ${{ inputs.disable_cache != 'true' }} && inputs.github-binarycache != 'true' && inputs.github-binarycache != true
     id: cache-vcpkg-archives
@@ -145,6 +168,7 @@ runs:
       key: ${{ runner.os }}-${{ inputs.triplet }}-vcpkg-${{ hashFiles('${{ inputs.vcpkg-subdir }}/vcpkg_dry_run.txt') }}-${{ inputs.cache-key }}
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
   - name: Export GitHub Actions cache environment variables
     if: (inputs.disable_cache != 'true' && inputs.disable_cache != true) &&  (inputs.github-binarycache == 'true' || inputs.github-binarycache == true)
     uses: actions/github-script@v6
@@ -153,7 +177,12 @@ runs:
         core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
         core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
         core.exportVariable('VCPKG_BINARY_SOURCES', "clear;x-gha,readwrite");
-  - name: build-vcpkg-win
+
+  ##########################
+  #  Build / vcpkg install
+  #
+
+  - name: build-vcpkg-win-nomanifest
     if: runner.os == 'Windows' && inputs.manifest-dir == ''
     shell: cmd
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
@@ -161,7 +190,8 @@ runs:
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} ${{ inputs.pkgs }}
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
-  - name: build-vcpkg-unix
+  
+  - name: build-vcpkg-unix-no-manifest
     if: runner.os != 'Windows' && inputs.manifest-dir == ''
     shell: bash
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
@@ -169,22 +199,29 @@ runs:
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} ${{ inputs.pkgs }}
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+  
   - name: build-vcpkg-win
     if: runner.os == 'Windows' && inputs.manifest-dir != ''
     shell: cmd
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
-    run: |
-      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
+    run: >
+      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
+      --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+  
   - name: build-vcpkg-unix
     if: runner.os != 'Windows' && inputs.manifest-dir != ''
     shell: bash
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
-    run: |
-      "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
+    run: >
+      ( "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
+      --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed )
+      || ( (echo '*********>>>>>DUMPING FILE>>>>>') && ( cat ./installed/vcpkg/issue_body.md ) && (echo '<<<<<*********') && ( false ))
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
+
+
   - name: vcpkg cmake configure 
     shell: bash
     id: vcpkg-cmake-config
