@@ -202,10 +202,10 @@ runs:
   
   - name: build-vcpkg-win
     if: runner.os == 'Windows' && inputs.manifest-dir != ''
-    shell: cmd
+    shell: powershell
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
     run: >
-      echo "WINDOWS - No VCPKG Manifest" &&
+      echo "WINDOWS - No VCPKG Manifest" ;
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
       --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
     env:
