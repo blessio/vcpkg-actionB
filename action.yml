@@ -202,7 +202,7 @@ runs:
   
   - name: build-vcpkg-win
     if: runner.os == 'Windows' && inputs.manifest-dir != ''
-    shell: powershell
+    shell: cmd
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
     run: >
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
@@ -217,8 +217,9 @@ runs:
     run: >
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
       --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
-      || cat /Users/runner/work/keepassxc-B/keepassxc-B/_vpkg/installed/vcpkg/issue_body.md
-      && false
+
+    # || cat /Users/runner/work/keepassxc-B/keepassxc-B/_vpkg/installed/vcpkg/issue_body.md
+    # && false
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
 
