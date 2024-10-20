@@ -215,10 +215,10 @@ runs:
     shell: bash
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
     run: >
-      ( "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
+      ( ( "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
       --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed )
-      || ( cat ./installed/vcpkg/issue_body.md ) 
-    # && false
+      || ( cat ./installed/vcpkg/issue_body.md ) )
+      && false
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
 
