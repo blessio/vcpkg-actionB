@@ -64,7 +64,7 @@ runs:
       repo: microsoft/vcpkg
       prerelease: false
       draft: false    
-      
+
   - name: Determine checkout tag
     shell: bash
     id: determine-checkout-revision
@@ -182,7 +182,7 @@ runs:
   #  Build / vcpkg install
   #
 
-  - name: build-vcpkg-win
+  - name: build-vcpkg-win-nomanifest
     if: runner.os == 'Windows' && inputs.manifest-dir == ''
     shell: cmd
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
@@ -191,7 +191,7 @@ runs:
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
   
-  - name: build-vcpkg-unix
+  - name: build-vcpkg-unix-no-manifest
     if: runner.os != 'Windows' && inputs.manifest-dir == ''
     shell: bash
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
@@ -205,6 +205,7 @@ runs:
     shell: cmd
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
     run: >
+      echo "WINDOWS - No VCPKG Manifest" &&
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
       --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
     env:
@@ -215,8 +216,11 @@ runs:
     shell: bash
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
     run: >
+      echo "UNIX - WITH VCPKG Manifest" &&
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
       --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
+      || cat /Users/runner/work/keepassxc-B/keepassxc-B/_vpkg/installed/vcpkg/issue_body.md
+      && false
     env:
       VCPKG_ROOT: "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}"
 
