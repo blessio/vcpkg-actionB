@@ -205,7 +205,6 @@ runs:
     shell: powershell
     working-directory: ${{ github.workspace }}\${{ inputs.vcpkg-subdir }}
     run: >
-      echo "WINDOWS - No VCPKG Manifest" ;
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg.exe" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
       --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
     env:
@@ -216,7 +215,6 @@ runs:
     shell: bash
     working-directory: ${{ github.workspace }}/${{ inputs.vcpkg-subdir }}
     run: >
-      echo "UNIX - WITH VCPKG Manifest" &&
       "${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/vcpkg" install --triplet ${{ inputs.triplet }} ${{ inputs.extra-args }} 
       --x-manifest-root=${{ inputs.manifest-dir }} --x-install-root=${{ github.workspace }}/${{ inputs.vcpkg-subdir }}/installed
       || cat /Users/runner/work/keepassxc-B/keepassxc-B/_vpkg/installed/vcpkg/issue_body.md
